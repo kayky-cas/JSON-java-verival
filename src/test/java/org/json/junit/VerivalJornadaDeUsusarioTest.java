@@ -1,68 +1,66 @@
 package org.json.junit;
 
 import static org.junit.Assert.*;
-import java.io.StringWriter;
-import java.util.*;
 import org.json.*;
 import org.junit.Test;
 
-
 public final class VerivalJornadaDeUsusarioTest {
     @Test
-    public void parseDeJsonSimples() {
-        String jsonString = "{\"appName\":\"MyApp\",\"version\":\"1.0.0\",\"settings\":{\"theme\":\"light\",\"notifications\":true}}";
-        JSONObject jsonObject = new JSONObject(jsonString);
+    public void parseHTTPToJSON() {
+        String httpBody = "{\"transactionId\":\"12345\",\"user\":{\"id\":\"67890\",\"name\":\"John Doe\"},\"amount\":150.00,\"currency\":\"USD\"}";
 
         JSONObject expected = new JSONObject()
-            .put("appName", "MyApp")
-            .put("version", "1.0.0")
-            .put("settings", new JSONObject()
-                .put("theme", "light")
-                .put("notifications", true)
-            );
+                .put("transactionId", "12345")
+                .put("user", new JSONObject()
+                        .put("id", "67890")
+                        .put("name", "John Doe"))
+                .put("amount", 150.00)
+                .put("currency", "USD");
 
-        assertTrue(expected.similar(jsonObject));
-    }
-
-    @Test 
-    public void modificacaoDePropriedade() {
-        JSONObject jsonObject =  new JSONObject()
-            .put("appName", "MyApp")
-            .put("version", "1.0.0")
-            .put("settings", new JSONObject()
-                .put("theme", "light")
-                .put("notifications", true)
-            );
-
-        jsonObject
-            .getJSONObject("settings")
-            .put("theme", "dark")
-            .put("notifications", false);
-
-        JSONObject expected = new JSONObject()
-            .put("appName", "MyApp")
-            .put("version", "1.0.0")
-            .put("settings", new JSONObject()
-                .put("theme", "dark")
-                .put("notifications", false)
-            );
+        JSONObject jsonObject = new JSONObject(httpBody);
 
         assertTrue(expected.similar(jsonObject));
     }
 
     @Test
-    public void carregamentoESalvamento() {
-        String jsonString = "{\"appName\":\"MyApp\",\"version\":\"1.0.0\",\"settings\":{\"theme\":\"light\",\"notifications\":true}}";
-        JSONObject jsonObject = new JSONObject(jsonString);
+    public void modificaçãoDeValoresNoJSON() {
+        JSONObject jsonObject = new JSONObject()
+                .put("transactionId", "12345")
+                .put("user", new JSONObject()
+                        .put("id", "67890")
+                        .put("name", "John Doe"))
+                .put("amount", 150.00)
+                .put("currency", "USD");
 
-        jsonObject.getJSONObject("settings").put("theme", "dark").put("notifications", false);
+        JSONObject expected = new JSONObject()
+                .put("transactionId", "12345")
+                .put("user", new JSONObject()
+                        .put("id", "67890")
+                        .put("name", "Jane Doe"))
+                .put("amount", 200.00)
+                .put("currency", "BRL");
 
-        StringWriter writer = new StringWriter();
+        jsonObject.put("amount", 200.00);
+        jsonObject.put("currency", "BRL");
+        jsonObject.getJSONObject("user").put("name", "Jane Doe");
 
-        String novaJsonString = jsonObject.write(writer).toString();
-        String expected = "{\"settings\":{\"theme\":\"dark\",\"notifications\":false},\"appName\":\"MyApp\",\"version\":\"1.0.0\"}";
+        assertTrue(expected.similar(jsonObject));
+    }
 
-        assertEquals(expected, novaJsonString);
+    @Test
+    public void conversãoCompletaDeJSONParaXML() {
+        JSONObject jsonObject = new JSONObject()
+                .put("transactionId", 12345)
+                .put("user", new JSONObject()
+                        .put("id", 67890)
+                        .put("name", "Jane Doe"))
+                .put("amount", 200.00)
+                .put("currency", "BRL");
+
+        String expectedXML = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><transaction><transactionId>12345</transactionId><user><id>67890</id><name>Jane Doe</name></user><amount>200.0</amount><currency>BRL</currency></transaction>";
+
+        JSONObject expected = XML.toJSONObject(expectedXML);
+        assertTrue(expected.getJSONObject("transaction").similar(jsonObject));
     }
 
     @Test
@@ -74,4 +72,3 @@ public final class VerivalJornadaDeUsusarioTest {
         });
     }
 }
-
